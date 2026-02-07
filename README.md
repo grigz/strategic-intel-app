@@ -1,36 +1,268 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Strategic Intel & Market Sensing Platform
 
-## Getting Started
+A single-user platform for monitoring competitors and market trends through webhooks from changedetection.io and RSSHub.
 
-First, run the development server:
+## Features
+
+- **3-Column Master-Detail UI**: Rapid scanning interface with sidebar navigation, master feed, and detail pane
+- **Webhook Ingestion**: Receives and processes intelligence from external sources
+- **Async Processing**: Inngest-powered queue with automatic retries
+- **Data Export**: CSV/JSON exports with 5-day filtering
+- **Safe HTML Rendering**: DOMPurify sanitization for untrusted content
+- **Competitor & Keyword Tracking**: Manage entities to monitor
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Database**: Supabase (PostgreSQL) + Drizzle ORM
+- **Queue**: Inngest (backed by Upstash Redis)
+- **UI**: Tailwind CSS + shadcn/ui + Lucide icons
+- **Sanitization**: isomorphic-dompurify
+
+## Setup Instructions
+
+### 1. Install Dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Set Up Supabase
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Create a Supabase account at https://supabase.com
+2. Create a new project
+3. Copy the project URL and anon key
+4. Copy the database connection string from Settings > Database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Set Up Inngest
 
-## Learn More
+1. Create an Inngest account at https://www.inngest.com
+2. Create a new app
+3. Copy the Event Key and Signing Key
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Configure Environment Variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Copy `.env.example` to `.env.local` and fill in your credentials:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+cp .env.example .env.local
+```
 
-## Deploy on Vercel
+Edit `.env.local` with your actual values:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
+DATABASE_URL=postgresql://postgres:[password]@db.xxx.supabase.co:5432/postgres
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Inngest
+INNGEST_EVENT_KEY=your-event-key
+INNGEST_SIGNING_KEY=your-signing-key
+
+# Security
+WEBHOOK_SECRET_TOKEN=generate-strong-random-token
+
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### 5. Run Database Migrations
+
+```bash
+npx drizzle-kit generate
+npx drizzle-kit migrate
+```
+
+Or use Drizzle Studio to inspect the schema:
+
+```bash
+npx drizzle-kit studio
+```
+
+### 6. Start Development Servers
+
+Open two terminal windows:
+
+**Terminal 1 - Inngest Dev Server:**
+```bash
+npx inngest-cli@latest dev
+```
+
+**Terminal 2 - Next.js:**
+```bash
+npm run dev
+```
+
+The app will be available at http://localhost:3000
+
+## Usage
+
+### Adding Competitors and Keywords
+
+1. Click the Settings button in the sidebar
+2. Choose "Add Competitor" or "Add Keyword"
+3. Fill in the details and submit
+
+### Sending Test Webhooks
+
+```bash
+curl -X POST "http://localhost:3000/api/webhooks/ingest?type=Hiring&comp_id=YOUR_COMPETITOR_ID&platform=Reddit" \
+  -H "Authorization: Bearer dev-secret-token-change-in-production" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Software Engineer Opening",
+    "content": "<p>We are hiring for a senior software engineer position...</p>",
+    "url": "https://reddit.com/r/jobs/example"
+  }'
+```
+
+### Exporting Data
+
+**JSON Export (All Data):**
+```bash
+curl "http://localhost:3000/api/export?scope=all&format=json"
+```
+
+**CSV Export (Companies Only):**
+```bash
+curl "http://localhost:3000/api/export?scope=companies&format=csv" -o intel-export.csv
+```
+
+**CSV Export (Keywords Only):**
+```bash
+curl "http://localhost:3000/api/export?scope=keywords&format=csv" -o keywords-export.csv
+```
+
+## API Reference
+
+### Webhook Ingestion
+
+**Endpoint:** `POST /api/webhooks/ingest`
+
+**Query Parameters:**
+- `type` (required): Signal type - `Hiring`, `Market Shift`, `Culture`, or `Customer Pain`
+- `platform` (required): Source platform - `Reddit`, `X`, `LinkedIn`, or `Website`
+- `comp_id` (optional): Competitor UUID
+- `keyword_id` (optional): Keyword UUID
+
+**Headers:**
+- `Authorization: Bearer <WEBHOOK_SECRET_TOKEN>`
+- `Content-Type: application/json`
+
+**Body:**
+```json
+{
+  "title": "Intelligence item title",
+  "content": "<p>HTML content</p>",
+  "url": "https://source-url.com"
+}
+```
+
+### Export API
+
+**Endpoint:** `GET /api/export`
+
+**Query Parameters:**
+- `scope`: `all`, `companies`, or `keywords` (default: `all`)
+- `format`: `json` or `csv` (default: `json`)
+
+## Database Schema
+
+### Tables
+
+**competitors**
+- `id` (UUID, PK)
+- `name` (text)
+- `domain` (text)
+- `created_at` (timestamp)
+
+**keywords**
+- `id` (UUID, PK)
+- `term` (text)
+- `category` (text)
+- `created_at` (timestamp)
+
+**intel_items**
+- `id` (UUID, PK)
+- `title` (text)
+- `raw_content` (text)
+- `source_url` (text)
+- `source_platform` (text)
+- `signal_type` (text)
+- `competitor_id` (UUID, FK, nullable)
+- `keyword_id` (UUID, FK, nullable)
+- `created_at` (timestamp, indexed)
+
+## Architecture
+
+### Webhook Flow
+
+1. External service (changedetection.io/RSSHub) sends POST to `/api/webhooks/ingest`
+2. Route validates Bearer token and required fields
+3. Event queued to Inngest with `intel/webhook.received`
+4. Inngest function `process-intel-item` inserts to database
+5. UI polls `/api/export` for updated feed
+
+### UI State Management
+
+- Client-side React state (useState) for active view and selected item
+- No URL routing in MVP (future enhancement)
+- Feed refreshes on view change and after management actions
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Push code to GitHub
+2. Import project to Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy
+
+### Environment Variables Checklist
+
+- [ ] `NEXT_PUBLIC_SUPABASE_URL`
+- [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- [ ] `DATABASE_URL`
+- [ ] `INNGEST_EVENT_KEY`
+- [ ] `INNGEST_SIGNING_KEY`
+- [ ] `WEBHOOK_SECRET_TOKEN` (generate strong random value)
+- [ ] `NEXT_PUBLIC_APP_URL` (your production URL)
+
+## Security Notes
+
+1. **Always use HTTPS in production**
+2. **Rotate `WEBHOOK_SECRET_TOKEN` regularly**
+3. **Restrict Supabase RLS policies** if using auth later
+4. **DOMPurify sanitizes all HTML** before rendering
+5. **No cloud AI processing** - all analysis via offline exports
+
+## Troubleshooting
+
+### Database Connection Errors
+
+Verify `DATABASE_URL` format:
+```
+postgresql://postgres:[password]@db.xxx.supabase.co:5432/postgres
+```
+
+### Inngest Not Processing
+
+1. Check Inngest Dev Server is running on http://localhost:8288
+2. Verify `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY`
+3. Check function registration in http://localhost:8288
+
+### Webhook Failures
+
+1. Verify Bearer token matches `WEBHOOK_SECRET_TOKEN`
+2. Check required query params: `type` and `platform`
+3. Ensure body contains `title`, `content`, and `url`
+
+## Future Enhancements
+
+- [ ] URL-based routing for deep linking
+- [ ] Server Actions for better caching
+- [ ] Real-time updates via Supabase subscriptions
+- [ ] Signal type customization in database
+- [ ] Bulk import/export tools
+- [ ] Advanced filtering and search
