@@ -28,6 +28,7 @@ export async function GET() {
     return NextResponse.json(allCompetitors);
   } catch (error) {
     console.error("Failed to fetch competitors:", error);
-    return NextResponse.json({ error: "Failed to fetch competitors" }, { status: 500 });
+    // Return empty array to prevent UI crash when DB not configured
+    return NextResponse.json([]);
   }
 }
