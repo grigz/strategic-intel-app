@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { IntelItemCard } from "@/components/features/intel/intel-item-card";
-import { Download } from "lucide-react";
+import { Download, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface IntelItem {
@@ -28,33 +28,40 @@ export function MasterFeed({ activeView, selectedItemId, onItemSelect }: MasterF
   const [items, setItems] = useState<IntelItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    async function fetchItems() {
-      setLoading(true);
-      setError(false);
-      try {
-        const scope = activeView === "companies" ? "companies" : "keywords";
-        const response = await fetch(`/api/export?scope=${scope}&format=json`);
-        const data = await response.json();
-        // Ensure data is an array
-        if (Array.isArray(data)) {
-          setItems(data);
-        } else {
-          setItems([]);
-          setError(true);
-        }
-      } catch (error) {
-        console.error("Failed to fetch items:", error);
+  const fetchItems = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const scope = activeView === "companies" ? "companies" : "keywords";
+      const response = await fetch(`/api/export?scope=${scope}&format=json`);
+      const data = await response.json();
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setItems(data);
+      } else {
         setItems([]);
         setError(true);
-      } finally {
-        setLoading(false);
       }
+    } catch (error) {
+      console.error("Failed to fetch items:", error);
+      setItems([]);
+      setError(true);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
+  };
 
+  useEffect(() => {
     fetchItems();
   }, [activeView]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchItems();
+  };
 
   const handleDownload = async (format: "csv" | "json") => {
     try {
@@ -127,6 +134,16 @@ export function MasterFeed({ activeView, selectedItemId, onItemSelect }: MasterF
             {activeView === "companies" ? "Company Intelligence" : "Keyword Intelligence"}
           </h2>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="h-8 px-2"
+            >
+              <RefreshCw className={`h-3 w-3 mr-1 ${refreshing ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
             <Button
               variant="outline"
               size="sm"
