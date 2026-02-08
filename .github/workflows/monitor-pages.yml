@@ -63,8 +63,9 @@ jobs:
               TITLE=$(echo "$CONTENT" | grep -oP '<title>\K[^<]+' | head -1 || echo "$NAME - Content Updated")
               SNIPPET=$(echo "$CONTENT" | grep -oP '<meta name="description" content="\K[^"]+' | head -1 || echo "Content on $NAME has been updated.")
 
-              # Build webhook URL
-              WEBHOOK_URL="${APP_URL}/api/webhooks/ingest?type=${SIGNAL_TYPE}&platform=Website"
+              # Build webhook URL (URL encode signal type)
+              ENCODED_TYPE=$(echo "$SIGNAL_TYPE" | jq -sRr @uri)
+              WEBHOOK_URL="${APP_URL}/api/webhooks/ingest?type=${ENCODED_TYPE}&platform=Website"
               if [ -n "$COMP_ID" ]; then
                 WEBHOOK_URL="${WEBHOOK_URL}&comp_id=${COMP_ID}"
               fi
