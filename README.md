@@ -1,15 +1,40 @@
 # Strategic Intel & Market Sensing Platform
 
-A single-user platform for monitoring competitors and market trends through webhooks from changedetection.io and RSSHub.
+A single-user platform for monitoring competitors and market trends with automated web monitoring and webhook integrations.
+
+**🚀 Live App:** https://strategic-intel-app.vercel.app
+
+## Quick Links
+
+- **[User Guide](USER_GUIDE.md)** - Complete guide to using the app
+- **[Quick Start](QUICKSTART.md)** - Get started in 15 minutes
+- **[Testing Guide](TESTING.md)** - Test webhooks and features
+- **[Deployment Guide](DEPLOYMENT.md)** - Deploy to production
 
 ## Features
 
-- **3-Column Master-Detail UI**: Rapid scanning interface with sidebar navigation, master feed, and detail pane
-- **Webhook Ingestion**: Receives and processes intelligence from external sources
+### Intelligence Gathering
+- **Automated Web Monitoring**: GitHub Actions checks competitor pages every 6 hours (free!)
+- **Webhook Ingestion**: Receive intelligence from external sources
 - **Async Processing**: Inngest-powered queue with automatic retries
-- **Data Export**: CSV/JSON exports with 5-day filtering
-- **Safe HTML Rendering**: DOMPurify sanitization for untrusted content
-- **Competitor & Keyword Tracking**: Manage entities to monitor
+- **Change Detection**: Hash-based monitoring detects page updates
+
+### User Interface
+- **3-Column Master-Detail UI**: Rapid scanning with sidebar, feed, and detail pane
+- **Grouped Intelligence**: Items organized by company or keyword
+- **Clickable Source URLs**: Direct links to original content
+- **Refresh Button**: Update feed with latest intelligence
+
+### Data Management
+- **CSV/JSON Export**: Download intelligence for offline analysis
+- **Competitor Tracking**: Manage companies to monitor
+- **Keyword Tracking**: Track market trends and technologies
+- **Monitored Pages**: Add/remove pages through the UI
+
+### Security
+- **Safe HTML Rendering**: DOMPurify sanitization
+- **Bearer Token Auth**: Webhook authentication
+- **Deployment Protection**: Vercel bypass tokens
 
 ## Tech Stack
 
