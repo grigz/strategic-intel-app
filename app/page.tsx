@@ -19,23 +19,58 @@ export default function Home() {
   const [showAddMonitoredPage, setShowAddMonitoredPage] = useState(false);
   const [showMonitoringDashboard, setShowMonitoringDashboard] = useState(false);
   const [showTestWebhook, setShowTestWebhook] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <SidebarNav
-        activeView={activeView}
-        onViewChange={(view) => {
-          setActiveView(view);
-          setSelectedItemId(null);
-        }}
-        onSettingsClick={() => setShowSettings(!showSettings)}
-      />
-      <MasterFeed
-        activeView={activeView}
-        selectedItemId={selectedItemId}
-        onItemSelect={setSelectedItemId}
-      />
-      <ReaderPane itemId={selectedItemId} />
+      {/* Mobile: Sidebar as overlay */}
+      <div className={`md:hidden fixed inset-0 z-50 ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+        <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setMobileMenuOpen(false)} />
+        <div className="absolute left-0 top-0 bottom-0 w-64 bg-white">
+          <SidebarNav
+            activeView={activeView}
+            onViewChange={(view) => {
+              setActiveView(view);
+              setSelectedItemId(null);
+              setMobileMenuOpen(false);
+            }}
+            onSettingsClick={() => {
+              setShowSettings(!showSettings);
+              setMobileMenuOpen(false);
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Desktop: Sidebar always visible */}
+      <div className="hidden md:block">
+        <SidebarNav
+          activeView={activeView}
+          onViewChange={(view) => {
+            setActiveView(view);
+            setSelectedItemId(null);
+          }}
+          onSettingsClick={() => setShowSettings(!showSettings)}
+        />
+      </div>
+
+      {/* Master Feed - hidden on mobile when item selected */}
+      <div className={`flex-1 ${selectedItemId ? 'hidden md:flex' : 'flex'}`}>
+        <MasterFeed
+          activeView={activeView}
+          selectedItemId={selectedItemId}
+          onItemSelect={setSelectedItemId}
+          onMobileMenuClick={() => setMobileMenuOpen(true)}
+        />
+      </div>
+
+      {/* Reader Pane - full screen on mobile when item selected */}
+      <div className={`${selectedItemId ? 'flex' : 'hidden'} md:flex w-full md:w-96`}>
+        <ReaderPane
+          itemId={selectedItemId}
+          onMobileClose={() => setSelectedItemId(null)}
+        />
+      </div>
 
       <AddCompetitorDialog
         open={showAddCompetitor}

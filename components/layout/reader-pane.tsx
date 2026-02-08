@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, ArrowLeft } from "lucide-react";
 import { sanitizeHTML } from "@/lib/sanitize";
 import { SignalBadge } from "@/components/features/intel/signal-badge";
 import { SourceIcon } from "@/components/features/intel/source-icon";
@@ -23,9 +23,10 @@ interface IntelItemDetail {
 
 interface ReaderPaneProps {
   itemId: string | null;
+  onMobileClose: () => void;
 }
 
-export function ReaderPane({ itemId }: ReaderPaneProps) {
+export function ReaderPane({ itemId, onMobileClose }: ReaderPaneProps) {
   const [item, setItem] = useState<IntelItemDetail | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -54,7 +55,7 @@ export function ReaderPane({ itemId }: ReaderPaneProps) {
 
   if (!itemId) {
     return (
-      <div className="w-96 p-6 flex items-center justify-center">
+      <div className="w-full md:w-96 p-6 flex items-center justify-center">
         <p className="text-gray-500 text-sm">Select an item to view details</p>
       </div>
     );
@@ -62,7 +63,7 @@ export function ReaderPane({ itemId }: ReaderPaneProps) {
 
   if (loading) {
     return (
-      <div className="w-96 p-6 flex items-center justify-center">
+      <div className="w-full md:w-96 p-6 flex items-center justify-center">
         <p className="text-gray-500 text-sm">Loading...</p>
       </div>
     );
@@ -70,7 +71,7 @@ export function ReaderPane({ itemId }: ReaderPaneProps) {
 
   if (!item) {
     return (
-      <div className="w-96 p-6 flex items-center justify-center">
+      <div className="w-full md:w-96 p-6 flex items-center justify-center">
         <p className="text-gray-500 text-sm">Item not found</p>
       </div>
     );
@@ -79,9 +80,17 @@ export function ReaderPane({ itemId }: ReaderPaneProps) {
   const sanitizedContent = sanitizeHTML(item.rawContent);
 
   return (
-    <div className="w-96 flex flex-col">
+    <div className="w-full md:w-96 flex flex-col">
       <div className="p-6 border-b">
         <div className="flex items-center gap-2 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onMobileClose}
+            className="md:hidden h-8 w-8 p-0 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
           <SourceIcon platform={item.sourcePlatform} />
           <SignalBadge signalType={item.signalType} />
         </div>

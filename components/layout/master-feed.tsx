@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { IntelItemCard } from "@/components/features/intel/intel-item-card";
-import { Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface IntelItem {
@@ -24,9 +24,10 @@ interface MasterFeedProps {
   activeView: "companies" | "keywords";
   selectedItemId: string | null;
   onItemSelect: (id: string) => void;
+  onMobileMenuClick: () => void;
 }
 
-export function MasterFeed({ activeView, selectedItemId, onItemSelect }: MasterFeedProps) {
+export function MasterFeed({ activeView, selectedItemId, onItemSelect, onMobileMenuClick }: MasterFeedProps) {
   const [items, setItems] = useState<IntelItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -145,9 +146,19 @@ export function MasterFeed({ activeView, selectedItemId, onItemSelect }: MasterF
     <div className="flex-1 border-r">
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="font-semibold">
-            {activeView === "companies" ? "Company Intelligence" : "Keyword Intelligence"}
-          </h2>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onMobileMenuClick}
+              className="md:hidden h-8 w-8 p-0"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+            <h2 className="font-semibold">
+              {activeView === "companies" ? "Company Intelligence" : "Keyword Intelligence"}
+            </h2>
+          </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
