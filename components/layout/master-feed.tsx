@@ -109,6 +109,7 @@ export function MasterFeed({ activeView, selectedItemId, onItemSelect }: MasterF
               key={item.id}
               id={item.id}
               title={item.title}
+              sourceUrl={item.sourceUrl}
               sourcePlatform={item.sourcePlatform}
               signalType={item.signalType}
               createdAt={item.createdAt}

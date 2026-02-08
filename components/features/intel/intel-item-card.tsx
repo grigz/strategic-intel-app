@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 interface IntelItemCardProps {
   id: string;
   title: string;
+  sourceUrl: string;
   sourcePlatform: string;
   signalType: string;
   createdAt: Date;
@@ -15,6 +16,7 @@ interface IntelItemCardProps {
 
 export function IntelItemCard({
   title,
+  sourceUrl,
   sourcePlatform,
   signalType,
   createdAt,
@@ -34,6 +36,15 @@ export function IntelItemCard({
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-sm line-clamp-2 mb-2">{title}</h3>
+          <a
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="text-xs text-blue-600 hover:text-blue-800 hover:underline block mb-2 truncate"
+          >
+            {sourceUrl}
+          </a>
           <div className="flex items-center gap-2">
             <SignalBadge signalType={signalType} />
             <span className="text-xs text-gray-500">
