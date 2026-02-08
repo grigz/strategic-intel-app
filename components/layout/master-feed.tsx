@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { IntelItemCard } from "@/components/features/intel/intel-item-card";
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface IntelItem {
   id: string;
@@ -54,6 +56,29 @@ export function MasterFeed({ activeView, selectedItemId, onItemSelect }: MasterF
     fetchItems();
   }, [activeView]);
 
+  const handleDownload = async (format: "csv" | "json") => {
+    try {
+      const scope = activeView === "companies" ? "companies" : "keywords";
+      const response = await fetch(`/api/export?scope=${scope}&format=${format}`);
+      const data = await response.text();
+
+      const blob = new Blob([data], {
+        type: format === "csv" ? "text/csv" : "application/json"
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${scope}-intelligence-${new Date().toISOString().split("T")[0]}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert("Failed to download file");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -97,9 +122,31 @@ export function MasterFeed({ activeView, selectedItemId, onItemSelect }: MasterF
   return (
     <div className="flex-1 border-r">
       <div className="p-4 border-b">
-        <h2 className="font-semibold">
-          {activeView === "companies" ? "Company Intelligence" : "Keyword Intelligence"}
-        </h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="font-semibold">
+            {activeView === "companies" ? "Company Intelligence" : "Keyword Intelligence"}
+          </h2>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleDownload("csv")}
+              className="h-8 px-2"
+            >
+              <Download className="h-3 w-3 mr-1" />
+              CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleDownload("json")}
+              className="h-8 px-2"
+            >
+              <Download className="h-3 w-3 mr-1" />
+              JSON
+            </Button>
+          </div>
+        </div>
         <p className="text-sm text-gray-600">{items.length} items</p>
       </div>
       <ScrollArea className="h-[calc(100vh-80px)]">
