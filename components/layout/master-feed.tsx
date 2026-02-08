@@ -16,6 +16,8 @@ interface IntelItem {
   createdAt: Date;
   competitorId: string | null;
   keywordId: string | null;
+  competitorName?: string | null;
+  keywordTerm?: string | null;
 }
 
 interface MasterFeedProps {
@@ -85,6 +87,19 @@ export function MasterFeed({ activeView, selectedItemId, onItemSelect }: MasterF
       alert("Failed to download file");
     }
   };
+
+  // Group items by company or keyword
+  const groupedItems = items.reduce((groups, item) => {
+    const key = activeView === "companies"
+      ? (item.competitorName || "Unknown Company")
+      : (item.keywordTerm || "Unknown Keyword");
+
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+    groups[key].push(item);
+    return groups;
+  }, {} as Record<string, IntelItem[]>);
 
   if (loading) {
     return (
@@ -167,19 +182,29 @@ export function MasterFeed({ activeView, selectedItemId, onItemSelect }: MasterF
         <p className="text-sm text-gray-600">{items.length} items</p>
       </div>
       <ScrollArea className="h-[calc(100vh-80px)]">
-        <div className="p-4 space-y-2">
-          {items.map((item) => (
-            <IntelItemCard
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              sourceUrl={item.sourceUrl}
-              sourcePlatform={item.sourcePlatform}
-              signalType={item.signalType}
-              createdAt={item.createdAt}
-              isSelected={selectedItemId === item.id}
-              onClick={() => onItemSelect(item.id)}
-            />
+        <div className="p-4 space-y-6">
+          {Object.entries(groupedItems).map(([groupName, groupItems]) => (
+            <div key={groupName} className="space-y-2">
+              <div className="flex items-center justify-between px-2">
+                <h3 className="font-semibold text-sm text-gray-900">{groupName}</h3>
+                <span className="text-xs text-gray-500">{groupItems.length} {groupItems.length === 1 ? 'item' : 'items'}</span>
+              </div>
+              <div className="space-y-2">
+                {groupItems.map((item) => (
+                  <IntelItemCard
+                    key={item.id}
+                    id={item.id}
+                    title={item.title}
+                    sourceUrl={item.sourceUrl}
+                    sourcePlatform={item.sourcePlatform}
+                    signalType={item.signalType}
+                    createdAt={item.createdAt}
+                    isSelected={selectedItemId === item.id}
+                    onClick={() => onItemSelect(item.id)}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </ScrollArea>
