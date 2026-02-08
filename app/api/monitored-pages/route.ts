@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const { id, lastHash, lastChecked } = await request.json();
+    const { id, lastHash, lastChecked, enabled } = await request.json();
 
     if (!id) {
       return NextResponse.json({ error: "Missing required field: id" }, { status: 400 });
@@ -53,6 +53,7 @@ export async function PUT(request: NextRequest) {
     const updates: any = {};
     if (lastHash !== undefined) updates.lastHash = lastHash;
     if (lastChecked !== undefined) updates.lastChecked = new Date(lastChecked);
+    if (enabled !== undefined) updates.enabled = enabled;
 
     const [page] = await db
       .update(monitoredPages)
