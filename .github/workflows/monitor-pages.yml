@@ -1,0 +1,98 @@
+name: Monitor Competitor Pages
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch monitored pages
+        id: fetch-pages
+        run: |
+          PAGES=$(curl -s "${{ secrets.APP_URL }}/api/monitored-pages")
+          echo "pages=$PAGES" >> $GITHUB_OUTPUT
+
+      - name: Monitor each page
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          WEBHOOK_TOKEN: ${{ secrets.WEBHOOK_SECRET_TOKEN }}
+        run: |
+          PAGES='${{ steps.fetch-pages.outputs.pages }}'
+
+          echo "$PAGES" | jq -c '.[]' | while read page; do
+            ID=$(echo "$page" | jq -r '.id')
+            URL=$(echo "$page" | jq -r '.url')
+            NAME=$(echo "$page" | jq -r '.name')
+            COMP_ID=$(echo "$page" | jq -r '.competitorId // empty')
+            SIGNAL_TYPE=$(echo "$page" | jq -r '.signalType')
+            LAST_HASH=$(echo "$page" | jq -r '.lastHash // ""')
+            ENABLED=$(echo "$page" | jq -r '.enabled')
+
+            # Skip if disabled
+            if [ "$ENABLED" != "true" ]; then
+              echo "Skipping disabled page: $NAME"
+              continue
+            fi
+
+            echo "Checking: $NAME ($URL)"
+
+            # Fetch page content
+            CONTENT=$(curl -s -L "$URL" 2>/dev/null || echo "")
+
+            if [ -z "$CONTENT" ]; then
+              echo "  ⚠️  Failed to fetch content"
+              continue
+            fi
+
+            # Calculate hash of content
+            CURRENT_HASH=$(echo "$CONTENT" | sha256sum | cut -d' ' -f1)
+
+            echo "  Current hash: $CURRENT_HASH"
+            echo "  Last hash: $LAST_HASH"
+
+            # Check if content changed
+            if [ "$CURRENT_HASH" != "$LAST_HASH" ] && [ -n "$LAST_HASH" ]; then
+              echo "  ✅ Change detected! Sending webhook..."
+
+              # Extract title and snippet from page
+              TITLE=$(echo "$CONTENT" | grep -oP '<title>\K[^<]+' | head -1 || echo "$NAME - Content Updated")
+              SNIPPET=$(echo "$CONTENT" | grep -oP '<meta name="description" content="\K[^"]+' | head -1 || echo "Content on $NAME has been updated.")
+
+              # Build webhook URL
+              WEBHOOK_URL="${APP_URL}/api/webhooks/ingest?type=${SIGNAL_TYPE}&platform=Website"
+              if [ -n "$COMP_ID" ]; then
+                WEBHOOK_URL="${WEBHOOK_URL}&comp_id=${COMP_ID}"
+              fi
+
+              # Send webhook
+              curl -X POST "$WEBHOOK_URL" \
+                -H "Authorization: Bearer $WEBHOOK_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{
+                  \"title\": \"$TITLE\",
+                  \"content\": \"<p>$SNIPPET</p><p>Page updated: $URL</p>\",
+                  \"url\": \"$URL\"
+                }"
+
+              echo "  📧 Webhook sent"
+            else
+              echo "  ℹ️  No changes detected"
+            fi
+
+            # Update hash in database
+            curl -X PUT "${APP_URL}/api/monitored-pages" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"id\": \"$ID\",
+                \"lastHash\": \"$CURRENT_HASH\",
+                \"lastChecked\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"
+              }"
+
+            echo "  ✓ Hash updated"
+            echo ""
+          done

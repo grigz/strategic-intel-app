@@ -6,6 +6,7 @@ import { MasterFeed } from "@/components/layout/master-feed";
 import { ReaderPane } from "@/components/layout/reader-pane";
 import { AddCompetitorDialog } from "@/components/features/competitors/add-competitor-dialog";
 import { AddKeywordDialog } from "@/components/features/keywords/add-keyword-dialog";
+import { AddMonitoredPageDialog } from "@/components/features/monitoring/add-monitored-page-dialog";
 
 export default function Home() {
   const [activeView, setActiveView] = useState<"companies" | "keywords">("companies");
@@ -13,6 +14,7 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false);
   const [showAddCompetitor, setShowAddCompetitor] = useState(false);
   const [showAddKeyword, setShowAddKeyword] = useState(false);
+  const [showAddMonitoredPage, setShowAddMonitoredPage] = useState(false);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -47,6 +49,14 @@ export default function Home() {
           setSelectedItemId(null);
         }}
       />
+      <AddMonitoredPageDialog
+        open={showAddMonitoredPage}
+        onOpenChange={setShowAddMonitoredPage}
+        onSuccess={() => {
+          // Refresh the feed
+          setSelectedItemId(null);
+        }}
+      />
 
       {showSettings && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -72,6 +82,16 @@ export default function Home() {
               >
                 <h3 className="font-semibold">Add Keyword</h3>
                 <p className="text-sm text-gray-600">Track a new keyword</p>
+              </button>
+              <button
+                className="w-full p-4 border rounded-lg hover:bg-gray-50 text-left"
+                onClick={() => {
+                  setShowAddMonitoredPage(true);
+                  setShowSettings(false);
+                }}
+              >
+                <h3 className="font-semibold">Add Monitored Page</h3>
+                <p className="text-sm text-gray-600">Monitor a webpage for changes</p>
               </button>
             </div>
             <button
