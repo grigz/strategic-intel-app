@@ -31,3 +31,15 @@ export const intelItems = pgTable(
     createdAtIdx: index("intel_items_created_at_idx").on(table.createdAt),
   })
 );
+
+export const monitoredPages = pgTable("monitored_pages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  url: text("url").notNull(),
+  name: text("name").notNull(),
+  competitorId: uuid("competitor_id").references(() => competitors.id),
+  signalType: text("signal_type").notNull(), // What type of intel this page provides
+  lastHash: text("last_hash"), // Hash of last known content
+  lastChecked: timestamp("last_checked"),
+  enabled: text("enabled").notNull().default("true"), // "true" or "false"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
