@@ -9,6 +9,7 @@ import { AddKeywordDialog } from "@/components/features/keywords/add-keyword-dia
 import { AddMonitoredPageDialog } from "@/components/features/monitoring/add-monitored-page-dialog";
 import { MonitoringDashboard } from "@/components/features/monitoring/monitoring-dashboard";
 import { TestWebhookSender } from "@/components/features/testing/test-webhook-sender";
+import { ManagementDashboard } from "@/components/features/management/management-dashboard";
 
 export default function Home() {
   const [activeView, setActiveView] = useState<"companies" | "keywords">("companies");
@@ -19,6 +20,7 @@ export default function Home() {
   const [showAddMonitoredPage, setShowAddMonitoredPage] = useState(false);
   const [showMonitoringDashboard, setShowMonitoringDashboard] = useState(false);
   const [showTestWebhook, setShowTestWebhook] = useState(false);
+  const [showManagementDashboard, setShowManagementDashboard] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -108,12 +110,26 @@ export default function Home() {
           setSelectedItemId(null);
         }}
       />
+      <ManagementDashboard
+        open={showManagementDashboard}
+        onOpenChange={setShowManagementDashboard}
+      />
 
       {showSettings && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
             <h2 className="text-xl font-bold mb-4">Settings</h2>
             <div className="space-y-4">
+              <button
+                className="w-full p-4 border rounded-lg hover:bg-gray-50 text-left border-purple-200 bg-purple-50"
+                onClick={() => {
+                  setShowManagementDashboard(true);
+                  setShowSettings(false);
+                }}
+              >
+                <h3 className="font-semibold">Manage Data</h3>
+                <p className="text-sm text-gray-600">View and delete companies, keywords, and webpages</p>
+              </button>
               <button
                 className="w-full p-4 border rounded-lg hover:bg-gray-50 text-left"
                 onClick={() => {
